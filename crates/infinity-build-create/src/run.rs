@@ -13,7 +13,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../templates");
+static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/templates");
 
 #[derive(Debug, Default)]
 pub struct CreateOptions {
