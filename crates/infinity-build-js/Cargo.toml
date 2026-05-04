@@ -9,7 +9,8 @@ repository.workspace = true
 description = "Rolldown-backed JS/TS instrument bundler for MSFS. Implements the infinity-build-core Builder trait, emits MSFS-shaped package sources (BaseInstrument harness, instrument.html, instrument.js, instrument.css)."
 
 [dependencies]
-infinity-build-core = { path = "../infinity-build-core", version = "0.3.0" }
+infinity-build-core = { path = "../infinity-build-core", version = "0.3.1" }
+
 
 rolldown = { workspace = true }
 rolldown_plugin = { workspace = true }

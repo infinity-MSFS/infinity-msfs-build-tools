@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -50,7 +50,7 @@ futures = "0.3"
 
 [package]
 name = "infinity-msfs"
-version = "0.2.0"
+version.workspace = true
 edition = "2024"
 rust-version = "1.85"
 description = "Build/packaging/util CLI for infinity-msfs projects."
@@ -68,8 +68,8 @@ name = "infinity-msfs"
 path = "src/main.rs"
 
 [dependencies]
-infinity-build-core = { path = "crates/infinity-build-core", version = "0.2.0" }
-infinity-build-js = { path = "crates/infinity-build-js", version = "0.2.0" }
+infinity-build-core = { path = "crates/infinity-build-core", version = "0.3.1" }
+infinity-build-js = { path = "crates/infinity-build-js", version = "0.3.1" }
 
 clap = { version = "4.5", features = ["derive", "env"] }
 serde = { workspace = true }
