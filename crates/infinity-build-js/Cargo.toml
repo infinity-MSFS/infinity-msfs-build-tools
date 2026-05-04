@@ -1,0 +1,36 @@
+[package]
+name = "infinity-build-js"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Rolldown-backed JS/TS instrument bundler for MSFS. Implements the infinity-build-core Builder trait, emits MSFS-shaped package sources (BaseInstrument harness, instrument.html, instrument.js, instrument.css)."
+
+[dependencies]
+infinity-build-core = { path = "../infinity-build-core", version = "0.3.0" }
+
+rolldown = { workspace = true }
+rolldown_plugin = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_utils = { workspace = true }
+arcstr = { workspace = true }
+
+# Force the resolver to pick the tuple-variant oxc_resolver release
+# (see workspace dep comment); not used directly.
+oxc_resolver = { workspace = true }
+
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = "0.1"
+
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+rustc-hash = "2"
+
+[dev-dependencies]
+toml = { workspace = true }

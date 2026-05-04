@@ -1,0 +1,14 @@
+[package]
+name = "infinity-build-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Core build abstractions for the infinity-msfs toolchain. Defines the Builder trait, common error/artifact types, and config primitives shared by Rust/WASM and JS/TS build paths."
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
