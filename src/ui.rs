@@ -18,15 +18,10 @@ pub struct BuildUi {
 
 pub struct BuildOutcome {
     pub copied_files: usize,
-    /// Final size of the artefact written to `out_dir`, in bytes.
     pub size_bytes: Option<u64>,
-    /// Size of the artefact on the previous successful build, if a stats
-    /// file was found. Used purely to render a +/- delta.
     pub previous_size_bytes: Option<u64>,
 }
 
-/// Coarse build phase shown in the spinner so users can tell whether a
-/// long-running step is cargo, wasm-opt, or the post-build copy pass.
 #[derive(Clone, Copy)]
 pub enum BuildPhase {
     Compiling,
@@ -44,9 +39,6 @@ impl BuildPhase {
     }
 }
 
-/// Are we running somewhere that an animated spinner is unwelcome?
-/// Triggered by non-TTY stdout or any of the well-known CI env vars
-/// (mirrors what indicatif/cargo themselves check).
 fn is_plain_output() -> bool {
     use std::io::IsTerminal;
     if !std::io::stdout().is_terminal() {
@@ -234,7 +226,8 @@ fn format_bytes(bytes: u64) -> String {
 
 pub fn print_projects(
     root: &Path,
-    projects: impl IntoIterator<Item = (String, String, String, PathBuf)>,
+    rust_projects: impl IntoIterator<Item = (String, String, String, PathBuf)>,
+    js_instruments: impl IntoIterator<Item = (String, String)>,
 ) {
     println!(
         "{} {}",
@@ -242,9 +235,14 @@ pub fn print_projects(
         style(root.display()).dim()
     );
 
-    for (package, bin, target, output) in projects {
+    let mut printed_rust_header = false;
+    for (package, bin, target, output) in rust_projects {
+        if !printed_rust_header {
+            println!("  {}", style("rust").dim().bold());
+            printed_rust_header = true;
+        }
         println!(
-            "  {} {} {} {} {}",
+            "    {} {} {} {} {}",
             style("•").cyan(),
             style(package).bold(),
             style(format!("[bin: {bin}]")).dim(),
@@ -252,6 +250,47 @@ pub fn print_projects(
             style(shorten_path(&output)).dim()
         );
     }
+
+    let mut printed_js_header = false;
+    for (name, index) in js_instruments {
+        if !printed_js_header {
+            if printed_rust_header {
+                println!();
+            }
+            println!("  {}", style("js").dim().bold());
+            printed_js_header = true;
+        }
+        println!(
+            "    {} {} {}",
+            style("•").cyan(),
+            style(name).bold(),
+            style(format!("[index: {index}]")).dim(),
+        );
+    }
+}
+
+pub fn announce_pre_hook(count: usize) {
+    if count == 0 {
+        return;
+    }
+    println!(
+        "{} {} {}",
+        style("→").cyan().bold(),
+        style("Running pre-build hooks").bold(),
+        style(format!("({count} {})", pluralize(count, "hook"))).dim(),
+    );
+}
+
+pub fn announce_post_hook(count: usize) {
+    if count == 0 {
+        return;
+    }
+    println!(
+        "{} {} {}",
+        style("→").cyan().bold(),
+        style("Running post-build hooks").bold(),
+        style(format!("({count} {})", pluralize(count, "hook"))).dim(),
+    );
 }
 
 pub fn print_error(err: &Error) {
@@ -291,9 +330,6 @@ fn shorten_path(path: &Path) -> String {
     format!("-> {}", hyperlink_path(path, &label))
 }
 
-/// Wrap `text` in an OSC-8 hyperlink pointing at `path`. The escape
-/// sequence is suppressed when the output is non-interactive so logs
-/// and CI don't get peppered with literal `^[]8;;…` noise.
 fn hyperlink_path(path: &Path, text: &str) -> String {
     if !supports_hyperlinks() {
         return text.to_string();
@@ -304,7 +340,6 @@ fn hyperlink_path(path: &Path, text: &str) -> String {
         .unwrap_or_else(|| path.to_path_buf());
 
     let url = path_to_file_url(&absolute);
-    // OSC-8 hyperlink: ESC ] 8 ;; URL ESC \  TEXT  ESC ] 8 ;; ESC \
     format!("\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\")
 }
 
@@ -325,7 +360,7 @@ fn supports_hyperlinks() -> bool {
 fn path_to_file_url(path: &Path) -> String {
     let raw = path.to_string_lossy();
     // Windows canonical paths come back as \\?\C:\… — strip the verbatim
-    // prefix so the resulting URL is what terminals/IDEs actually expect.
+    // prefix so the URL is what terminals/IDEs actually expect.
     let trimmed = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
     let forward = trimmed.replace('\\', "/");
 
@@ -365,8 +400,7 @@ fn path_to_file_url(path: &Path) -> String {
     if encoded.starts_with('/') {
         format!("file://{encoded}")
     } else {
-        // Windows drive-letter path (`C:/…`) — file:// expects an empty
-        // host followed by `/` then the path.
+        // Windows drive-letter path (C:/…); file:// needs empty host + '/' before it.
         format!("file:///{encoded}")
     }
 }

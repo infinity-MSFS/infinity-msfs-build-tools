@@ -1,0 +1,10 @@
+[package]
+name = "replace-me"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+infinity-rs = "0.2.1"

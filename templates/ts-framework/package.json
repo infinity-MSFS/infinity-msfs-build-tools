@@ -1,0 +1,18 @@
+{
+  "name": "replace-me",
+  "version": "0.1.0",
+  "description": "A TypeScript Avionics-Framework MSFS instrument scaffolded by infinity-msfs.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "infinity:build": "infinity-msfs build"
+  },
+  "dependencies": {
+    "@microsoft/msfs-sdk": "^2.3.3",
+    "@microsoft/msfs-types": "^1.14.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.4.0"
+  }
+}

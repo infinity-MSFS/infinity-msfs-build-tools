@@ -1,0 +1,16 @@
+[package]
+name = "infinity-build-package"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Wrapper around fspackagetool.exe for building MSFS sim packages from project XMLs."
+
+[dependencies]
+infinity-build-core = { path = "../infinity-build-core", version = "0.3.1" }
+infinity-build-sdk = { path = "../infinity-build-sdk", version = "0.3.1" }
+
+anyhow = { workspace = true }
+serde = { workspace = true }

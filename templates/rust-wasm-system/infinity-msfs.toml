@@ -1,0 +1,17 @@
+[rust]
+default_target = "wasm32-wasip1"
+output_dir = "build/msfs"
+
+[rust.wasm_opt]
+enabled = true
+passes = [
+    "-O1",
+    "--signext-lowering",
+    "--enable-bulk-memory",
+    "--enable-nontrapping-float-to-int",
+]
+
+[[rust.packages]]
+cargo_package = "replace-me"
+cargo_bin = "replace_me"
+artifact_name = "replace-me.wasm"

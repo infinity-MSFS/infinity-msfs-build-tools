@@ -1,11 +1,3 @@
-//! Lightweight per-build stats persistence.
-//!
-//! Currently we only store the final artefact size for each package so the
-//! UI can render a `+/- N KB` delta on the next build. The file lives at
-//! `target/.infinity-msfs-stats.json` (relative to the project root) and
-//! is best-effort: failures to read or write are surfaced as warnings,
-//! never as build failures.
-
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -15,10 +7,11 @@ use std::{
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Stats {
-    /// Map of cargo package name → most recent artefact size in bytes.
     #[serde(default)]
     sizes: HashMap<String, u64>,
 
+    /// Frozen snapshot from disk so the UI can render +/- deltas
+    /// even after `record` mutates `sizes` mid-build.
     #[serde(skip)]
     previous: HashMap<String, u64>,
 }
@@ -44,9 +37,6 @@ impl Stats {
         fs::write(path, json)
     }
 
-    /// Size recorded on the previous successful build, if any. The
-    /// in-memory `sizes` map is mutated by [`record`] during this run, so
-    /// we keep a frozen `previous` snapshot for the delta calculation.
     pub fn previous_size(&self, package: &str) -> Option<u64> {
         self.previous.get(package).copied()
     }

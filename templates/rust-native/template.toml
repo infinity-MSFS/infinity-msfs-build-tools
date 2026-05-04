@@ -1,0 +1,5 @@
+[template]
+id = "rust-native"
+display = "Rust native (SimConnect)"
+description = "A native host-target Rust binary linked against SimConnect. Windows-only at link time."
+category = "rust"

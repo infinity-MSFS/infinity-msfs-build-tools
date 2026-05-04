@@ -1,20 +1,21 @@
 mod build;
 mod build_js;
-mod cargo_meta;
 mod cli;
 mod config;
+mod create;
 mod doctor;
+mod package;
 mod process;
-mod scripts;
-mod sdk;
+mod runner;
 mod sdk_install;
-mod stats;
 mod ui;
 mod util;
+mod watch;
 
 use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, Commands, SdkCommand};
+
 
 fn main() {
     if let Err(err) = real_main() {
@@ -28,7 +29,6 @@ fn real_main() -> Result<()> {
 
     match cli.command {
         Commands::Build(args) => build::run_build(args)?,
-        Commands::Js(args) => build_js::run_js(args)?,
         Commands::Projects(args) => build::run_projects(args)?,
         Commands::Sdk(args) => match args.command {
             SdkCommand::Install(a) => sdk_install::run_install(a)?,
@@ -36,6 +36,9 @@ fn real_main() -> Result<()> {
             SdkCommand::Remove => sdk_install::run_remove()?,
         },
         Commands::Doctor => doctor::run_doctor()?,
+        Commands::Package(args) => package::run_package(args)?,
+        Commands::Watch(args) => watch::run_watch(args)?,
+        Commands::Create(args) => create::run_create(args)?,
     }
 
     Ok(())

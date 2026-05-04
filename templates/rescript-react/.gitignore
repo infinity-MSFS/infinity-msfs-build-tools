@@ -1,0 +1,7 @@
+node_modules
+lib
+.merlin
+*.bs.js
+*.res.mjs
+build/
+PackageSources/html_ui/

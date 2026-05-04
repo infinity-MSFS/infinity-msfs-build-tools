@@ -1,13 +1,6 @@
-//! `infinity-msfs doctor` — pre-flight environment checks.
-//!
-//! Each check returns a [`Status`] which the runner renders with a
-//! coloured glyph. The command always exits 0 unless something fatal
-//! happens while running the checks themselves; informational warnings
-//! are surfaced in the output but do not fail the program.
-
-use crate::sdk::{cache_base, current_version};
 use anyhow::Result;
 use console::style;
+use infinity_build_sdk::{cache_base, current_version};
 use std::{path::PathBuf, process::Command};
 
 #[derive(Clone, Copy)]
@@ -73,9 +66,7 @@ pub fn run_doctor() -> Result<()> {
             .red()
             .bold()
     } else if warnings > 0 {
-        style(format!("ok with {warnings} warning(s)"))
-            .yellow()
-            .bold()
+        style(format!("ok with {warnings} warning(s)")).yellow().bold()
     } else {
         style("all checks passed".to_string()).green().bold()
     };
@@ -83,10 +74,6 @@ pub fn run_doctor() -> Result<()> {
 
     Ok(())
 }
-
-// ---------------------------------------------------------------------------
-// Individual checks
-// ---------------------------------------------------------------------------
 
 fn check_cargo() -> CheckResult {
     match Command::new("cargo").arg("--version").output() {

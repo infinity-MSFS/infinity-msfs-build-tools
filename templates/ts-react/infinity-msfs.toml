@@ -1,0 +1,13 @@
+[js]
+package_name = "replace-me"
+package_dir = "PackageSources"
+
+[[js.instruments]]
+name = "replace-me"
+index = "src/replace-me/index.tsx"
+
+[js.instruments.simulator_package]
+type = "react"
+file_name = "replace-me"
+is_interactive = true
+imports = ["/JS/dataStorage.js"]

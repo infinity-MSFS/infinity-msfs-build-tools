@@ -1,0 +1,5 @@
+[template]
+id = "ts-react"
+display = "TypeScript + React instrument"
+description = "A plain TypeScript + React MSFS instrument bundled via rolldown."
+category = "js"

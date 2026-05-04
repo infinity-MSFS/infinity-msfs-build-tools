@@ -1,0 +1,5 @@
+[template]
+id = "rescript-react"
+display = "ReScript + React instrument"
+description = "A React-based MSFS instrument written in ReScript, using @infinity-msfs/rescript-msfs hooks."
+category = "js"

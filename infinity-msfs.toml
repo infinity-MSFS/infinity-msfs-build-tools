@@ -1,0 +1,89 @@
+# Copy this file to `infinity-msfs.toml` in your MSFS project root and
+# replace the sample names with your own workspace members.
+#
+#   infinity-msfs projects                # list configured projects
+#   infinity-msfs build --release         # build everything
+#   infinity-msfs build --only demo-gauge --release
+#   infinity-msfs build --js-only         # only the JS half of the pipeline
+#   infinity-msfs package                 # invoke fspackagetool (Windows + sim)
+#   infinity-msfs watch --js              # rebuild on file change
+
+# ─── Cargo build pipeline ────────────────────────────────────────
+[rust]
+default_target = "wasm32-wasip1"
+output_dir = "build/msfs"
+
+copy_files = [
+  { from = "manifest.json", to = "build/msfs/manifest.json" },
+  { from = "layout.json", to = "build/msfs/layout.json" },
+]
+
+[rust.wasm_opt]
+enabled = true
+passes = [
+  "-O1",
+  "--signext-lowering",
+  "--enable-bulk-memory",
+  "--enable-nontrapping-float-to-int",
+]
+
+[[rust.packages]]
+cargo_package = "demo-gauge"
+cargo_bin = "demo_gauge"
+artifact_name = "demo-gauge.wasm"
+
+[[rust.packages]]
+cargo_package = "demo-system"
+cargo_bin = "demo_system"
+artifact_name = "demo-system.wasm"
+output_dir = "build/msfs/systems"
+copy_files = [
+  { from = "systems/demo-system/config.json", to = "build/msfs/systems/config.json" },
+]
+
+# Native (host-target) build linked against SimConnect. Only built on
+# Windows; silently skipped elsewhere since the SimConnect import lib
+# is Windows-only. SimConnect.dll is copied next to the .exe automatically.
+[[rust.packages]]
+cargo_package = "demo-native"
+cargo_bin = "demo_native"
+artifact_kind = "native"
+cargo_features = ["simconnect"]
+output_dir = "build/native"
+
+# ─── JS / TS instrument bundling ─────────────────────────────────
+[js]
+package_name = "infinity-bridge"
+package_dir = "PackageSources"
+
+[[js.instruments]]
+name = "visualizer"
+index = "src-visualizer/index.tsx"
+
+[js.instruments.simulator_package]
+type = "react"
+file_name = "visualizer"
+is_interactive = true
+imports = ["/JS/dataStorage.js"]
+
+[[js.instruments]]
+name = "InfinityBridge"
+index = "src-bridge/Main.res.mjs"
+
+[js.instruments.simulator_package]
+type = "baseInstrument"
+template_id = "Infinity-Bridge"
+mount_element_id = "infinity-bridge-gauge"
+
+# ─── MSFS sim packages (fspackagetool.exe) ───────────────────────
+# Windows-only; requires MSFS 2024 installed locally.
+[[sim_packages]]
+name = "aerodynamics-dc10"
+project_xml = "DC10.xml"
+output_dir = "build/Packages"
+temp_dir = "build/PackageSourcesTemp"
+
+# ─── Build lifecycle hooks ───────────────────────────────────────
+[hooks]
+pre = ["cargo fmt --check"]
+post = ["python ./tools/fix_layout.py"]

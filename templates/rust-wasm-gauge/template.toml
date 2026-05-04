@@ -1,0 +1,15 @@
+[template]
+id = "rust-wasm-gauge"
+display = "Rust WASM gauge"
+description = "A cdylib MSFS gauge built to wasm32-wasip1, using infinity-rs."
+category = "rust"
+
+[[prompts]]
+key = "gauge_symbol"
+question = "Exported gauge symbol (snake_case)"
+default = "{{project_name|snake}}"
+validate = "snake"
+
+[tokens]
+"MyGauge" = "{{gauge_symbol|pascal}}"
+"my_gauge" = "{{gauge_symbol}}"

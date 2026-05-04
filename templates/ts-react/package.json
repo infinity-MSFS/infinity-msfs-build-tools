@@ -1,0 +1,21 @@
+{
+    "name": "replace-me",
+    "version": "0.1.0",
+    "description": "A React Template for MSFS using TypeScript",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "infinity:build": "infinity-msfs build"
+    },
+    "dependencies": {
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "react-msfs": "^0.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.6.0",
+        "@types/react": "^19.2.0",
+        "@types/react-dom": "^19.2.0",
+        "typescript": "^6.0.0"
+    }
+}

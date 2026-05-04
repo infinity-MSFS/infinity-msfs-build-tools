@@ -1,0 +1,13 @@
+[js]
+package_name = "replace-me"
+package_dir = "PackageSources"
+
+[[js.instruments]]
+name = "replace-me"
+index = "src/index.tsx"
+
+[js.instruments.simulator_package]
+type = "baseInstrument"
+file_name = "replace-me"
+template_id = "ReplaceMe"
+mount_element_id = "replace-me-mount"

@@ -1,0 +1,26 @@
+{
+    "name": "replace-me",
+    "version": "0.1.0",
+    "description": "A ReScript + React MSFS instrument scaffolded by infinity-msfs.",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "rescript",
+        "watch": "rescript -w",
+        "clean": "rescript clean",
+        "infinity:build": "bun run build && infinity-msfs build"
+    },
+    "dependencies": {
+        "@rescript/core": "^1.6.1",
+        "@rescript/react": "^0.15.0",
+        "@infinity-msfs/rescript-msfs": "github:infinity-MSFS/rescript-msfs",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.0",
+        "@types/react-dom": "^19.2.0",
+        "rescript": "^12.0.0-alpha.13",
+        "typescript": "^6.0.0"
+    }
+}

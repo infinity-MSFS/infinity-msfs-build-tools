@@ -1,0 +1,26 @@
+{
+  "name": "replace-me",
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    }
+  ],
+  "package-specs": [
+    {
+      "module": "es6",
+      "in-source": false
+    }
+  ],
+  "suffix": ".res.mjs",
+  "bs-dependencies": [
+    "@rescript/core",
+    "@rescript/react",
+    "@infinity-msfs/rescript-msfs"
+  ],
+  "bsc-flags": ["-open RescriptCore"],
+  "jsx": {
+    "version": 4,
+    "mode": "automatic"
+  }
+}

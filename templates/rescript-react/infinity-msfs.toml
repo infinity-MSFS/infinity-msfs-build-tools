@@ -1,0 +1,15 @@
+[js]
+package_name = "replace-me"
+package_dir = "PackageSources"
+
+[[js.instruments]]
+name = "replace-me"
+index = "lib/es6/src/Main.res.mjs"
+
+[js.instruments.simulator_package]
+type = "rescriptReact"
+file_name = "replace-me"
+template_id = "ReplaceMe"
+is_interactive = true
+imports = ["/JS/dataStorage.js"]
+build_command = "bun run build"

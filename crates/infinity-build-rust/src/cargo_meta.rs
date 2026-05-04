@@ -5,7 +5,6 @@ use std::path::Path;
 pub fn load_metadata(root: &Path) -> Result<Metadata> {
     let mut cmd = MetadataCommand::new();
     cmd.current_dir(root);
-
     cmd.exec()
         .with_context(|| format!("failed to read cargo metadata in {}", root.display()))
 }
@@ -39,7 +38,8 @@ pub fn resolve_package<'a>(
     }
 
     bail!(
-        "could not determine target package automatically; this appears to be a workspace root. Supply -p <package> or set [build].package in infinity-msfs.toml"
+        "could not determine target package automatically; this appears to be a workspace root. \
+         Supply -p <package> or set [build].package in infinity-msfs.toml"
     );
 }
 
@@ -47,6 +47,5 @@ pub fn resolve_bin_name(pkg: &Package, configured_bin: Option<&str>) -> String {
     if let Some(bin) = configured_bin {
         return bin.to_string();
     }
-
     pkg.name.replace('-', "_")
 }

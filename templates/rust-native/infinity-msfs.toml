@@ -1,0 +1,5 @@
+[[rust.packages]]
+cargo_package = "replace-me"
+cargo_bin = "replace-me"
+artifact_kind = "native"
+output_dir = "build/native"

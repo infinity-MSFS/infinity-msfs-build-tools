@@ -1,0 +1,15 @@
+[template]
+id = "rust-wasm-system"
+display = "Rust WASM system"
+description = "A cdylib MSFS system module built to wasm32-wasip1, using infinity-rs."
+category = "rust"
+
+[[prompts]]
+key = "system_symbol"
+question = "Exported system symbol (snake_case)"
+default = "{{project_name|snake}}"
+validate = "snake"
+
+[tokens]
+"MySystem" = "{{system_symbol|pascal}}"
+"my_system" = "{{system_symbol}}"

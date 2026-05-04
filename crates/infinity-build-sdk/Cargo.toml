@@ -1,0 +1,20 @@
+[package]
+name = "infinity-build-sdk"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MSFS 2024 SDK download, cache, and lookup helpers."
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+console = "0.15"
+indicatif = "0.17"
+ureq = "2"
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
+msi = "0.10"
+cab = "0.6"

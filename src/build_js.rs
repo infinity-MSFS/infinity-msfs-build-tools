@@ -1,70 +1,46 @@
-use crate::{
-    cli::JsArgs,
-    config::InfinityMsfsToml,
-    ui::{BuildOutcome, BuildPhase, BuildUi},
-    util,
-};
-use anyhow::{Context, Result, bail};
+use crate::{config::InfinityMsfsToml, ui::{BuildOutcome, BuildPhase, BuildUi}, util};
+use anyhow::{Result, bail};
 use infinity_build_core::{Artifact, Builder};
 use infinity_build_js::{
     JsBundler,
     bundler::{BundleOptions, JsBuildInput, SourceMapKind},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
-pub fn run_js(args: JsArgs) -> Result<()> {
-    let root = util::find_project_root()?;
-    let cfg_path = util::config_path(&root);
-    if !cfg_path.exists() {
-        bail!(
-            "no infinity-msfs.toml found at {}; run `infinity-msfs js` from a project root",
-            cfg_path.display()
-        );
-    }
+pub struct JsBuildOpts<'a> {
+    pub verbose: bool,
+    pub minify: bool,
+    pub skip_simulator_package: bool,
+    pub sourcemap: Option<&'a str>,
+    /// Empty = build every instrument.
+    pub only: &'a [String],
+}
 
-    let cfg = InfinityMsfsToml::load(&cfg_path)?;
-    let js_cfg = cfg.js.as_ref().ok_or_else(|| {
-        anyhow::anyhow!(
-            "no [js] section in {}; nothing to bundle",
-            cfg_path.display()
-        )
-    })?;
-
-    let filter = match &args.filter {
-        Some(s) => {
-            Some(regex::Regex::new(s).with_context(|| format!("invalid --filter regex `{s}`"))?)
-        }
-        None => None,
+pub fn run_js_pipeline(root: &Path, cfg: &InfinityMsfsToml, opts: &JsBuildOpts<'_>) -> Result<()> {
+    let Some(js_cfg) = cfg.js.as_ref() else {
+        return Ok(());
     };
 
     let instruments: Vec<_> = js_cfg
         .instruments
         .iter()
-        .filter(|i| {
-            filter
-                .as_ref()
-                .map(|re| re.is_match(&i.name))
-                .unwrap_or(true)
-        })
+        .filter(|i| opts.only.is_empty() || opts.only.iter().any(|n| n == &i.name))
         .collect();
 
     if instruments.is_empty() {
-        bail!("no JS instruments selected to build");
+        return Ok(());
     }
 
     let bundle_options = BundleOptions {
         bundles_dir: None,
-        minify: args.minify,
-        sourcemap: parse_sourcemap_flag(args.sourcemap.as_deref())?,
-        skip_simulator_package: args.skip_simulator_package,
+        minify: opts.minify,
+        sourcemap: parse_sourcemap_flag(opts.sourcemap)?,
+        skip_simulator_package: opts.skip_simulator_package,
         env: env_from_process(),
     };
 
-    let bundler = JsBundler::new(root.clone(), bundle_options);
-
-    // Reuse the same BuildUi the WASM path uses so output looks
-    // consistent across both build flavours.
-    let mut ui = BuildUi::new(&root, instruments.len(), false, false, args.verbose);
+    let bundler = JsBundler::new(root.to_path_buf(), bundle_options);
+    let mut ui = BuildUi::new(root, instruments.len(), false, false, opts.verbose);
     ui.announce_phase("Bundling JS instruments", instruments.len());
 
     for instrument in &instruments {
@@ -92,6 +68,7 @@ pub fn run_js(args: JsArgs) -> Result<()> {
     }
 
     ui.finish();
+    let _ = util::config_path; // silence unused if cfg path not used elsewhere
     Ok(())
 }
 
@@ -108,9 +85,7 @@ fn parse_sourcemap_flag(flag: Option<&str>) -> Result<Option<SourceMapKind>> {
     }
 }
 
-/// Forward the host process's environment to rolldown's `define`.
-/// Filtered to ASCII-identifier-safe keys so we don't generate
-/// `define` entries rolldown would reject.
+/// Filtered to ASCII-identifier-safe keys; rolldown's `define` rejects others.
 fn env_from_process() -> HashMap<String, String> {
     std::env::vars()
         .filter(|(k, _)| is_valid_env_identifier(k))
