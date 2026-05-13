@@ -28,6 +28,7 @@ const KEEP_PREFIXES: &[&str] = &[
     "WASM/wasi-sysroot/",
     "WASM/lib/",
     "WASM/src/",
+    "WASM/WasmVersions",
     "SimConnect SDK/include/",
     "SimConnect SDK/lib/",
 ];
