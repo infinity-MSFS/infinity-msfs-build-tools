@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.3.3"
+version = "0.3.4"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -60,13 +60,13 @@ name = "infinity-msfs"
 path = "src/main.rs"
 
 [dependencies]
-infinity-build-core = { path = "crates/infinity-build-core", version = "0.3.3" }
-infinity-build-js = { path = "crates/infinity-build-js", version = "0.3.3" }
-infinity-build-rust = { path = "crates/infinity-build-rust", version = "0.3.3" }
-infinity-build-package = { path = "crates/infinity-build-package", version = "0.3.3" }
-infinity-build-sdk = { path = "crates/infinity-build-sdk", version = "0.3.3" }
-infinity-build-watch = { path = "crates/infinity-build-watch", version = "0.3.3" }
-infinity-build-create = { path = "crates/infinity-build-create", version = "0.3.3" }
+infinity-build-core = { path = "crates/infinity-build-core", version = "0.3.4" }
+infinity-build-js = { path = "crates/infinity-build-js", version = "0.3.4" }
+infinity-build-rust = { path = "crates/infinity-build-rust", version = "0.3.4" }
+infinity-build-package = { path = "crates/infinity-build-package", version = "0.3.4" }
+infinity-build-sdk = { path = "crates/infinity-build-sdk", version = "0.3.4" }
+infinity-build-watch = { path = "crates/infinity-build-watch", version = "0.3.4" }
+infinity-build-create = { path = "crates/infinity-build-create", version = "0.3.4" }
 
 clap = { version = "4.5", features = ["derive", "env"] }
 serde = { workspace = true }
