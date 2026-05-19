@@ -55,6 +55,20 @@ pub fn run_cargo_build(
         cmd.arg("--release");
     }
 
+    // WASM builds that pull in C dependencies (e.g. the bundled SQLite in
+    // `t38-navdata`, compiled by the `cc` crate via `libsqlite3-sys`) need a
+    // WASI sysroot for the C headers. Point `cc` at the MSFS SDK's bundled
+    // `wasi-sysroot` so these builds are self-contained — no per-developer
+    // environment setup. An explicit `WASI_SYSROOT` in the environment wins.
+    if plan.kind == ArtifactKind::Wasm && std::env::var_os("WASI_SYSROOT").is_none() {
+        if let Ok(sdk) = infinity_build_sdk::sdk_path() {
+            let sysroot = Path::new(&sdk).join("WASM").join("wasi-sysroot");
+            if sysroot.is_dir() {
+                cmd.env("WASI_SYSROOT", sysroot);
+            }
+        }
+    }
+
     runner.run(&mut cmd, "cargo build")
 }
 
