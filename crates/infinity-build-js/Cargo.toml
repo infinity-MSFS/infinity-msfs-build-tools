@@ -16,6 +16,9 @@ rolldown = { workspace = true }
 rolldown_plugin = { workspace = true }
 rolldown_common = { workspace = true }
 rolldown_utils = { workspace = true }
+# Force the 2-tuple rolldown_std_utils release (see workspace dep
+# comment); transitive via rolldown, not used directly.
+rolldown_std_utils = { workspace = true }
 arcstr = { workspace = true }
 
 # Force the resolver to pick the tuple-variant oxc_resolver release

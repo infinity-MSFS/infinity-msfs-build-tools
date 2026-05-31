@@ -20,6 +20,12 @@ pub fn run_build(args: BuildArgs) -> Result<()> {
     let cfg = load_cfg(&root)?;
     let runner = CliRunner { verbose: args.verbose };
 
+    // Export the aegis build id before anything compiles. cargo (a child of
+    // this process) and the pre/post hooks all inherit it, so the value baked
+    // into the WASM, the emitted `#[protected]` manifests, and the post-build
+    // seal/upload are guaranteed identical.
+    apply_aegis_build_id(&root, &cfg, args.release)?;
+
     let do_rust = !args.js_only;
     let do_js = !args.rust_only && cfg.js.is_some();
 
@@ -33,9 +39,18 @@ pub fn run_build(args: BuildArgs) -> Result<()> {
         );
     }
 
-    ui::announce_pre_hook(cfg.hooks.pre.len());
-    hooks::run_hook_list(&runner, &root, "pre", &cfg.hooks.pre)
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    // Hooks run on release builds only. The post hook seals the lowered
+    // `#[protected]` programs and uploads them to R2 — but debug builds ship the
+    // real kernels (not lowered stubs) and gate entitlement-only, so there's
+    // nothing to seal or upload. Skipping the hooks keeps debug iteration fast
+    // and avoids touching the live R2 store.
+    if args.release {
+        ui::announce_pre_hook(cfg.hooks.pre.len());
+        hooks::run_hook_list(&runner, &root, "pre", &cfg.hooks.pre)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    } else {
+        ui::announce_hooks_skipped("pre", cfg.hooks.pre.len());
+    }
 
     if any_rust {
         run_rust_pipeline(&root, &cfg, &args, &runner)?;
@@ -52,9 +67,13 @@ pub fn run_build(args: BuildArgs) -> Result<()> {
         build_js::run_js_pipeline(&root, &cfg, &js_opts)?;
     }
 
-    ui::announce_post_hook(cfg.hooks.post.len());
-    hooks::run_hook_list(&runner, &root, "post", &cfg.hooks.post)
-        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    if args.release {
+        ui::announce_post_hook(cfg.hooks.post.len());
+        hooks::run_hook_list(&runner, &root, "post", &cfg.hooks.post)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    } else {
+        ui::announce_hooks_skipped("post", cfg.hooks.post.len());
+    }
 
     Ok(())
 }
@@ -162,6 +181,64 @@ pub fn run_projects(args: ProjectsArgs) -> Result<()> {
     );
 
     Ok(())
+}
+
+/// Resolve the aegis build id and export it into the configured env vars so
+/// the build and its hooks see a single, consistent value. No-op unless
+/// `[aegis].enabled`.
+fn apply_aegis_build_id(root: &Path, cfg: &InfinityMsfsToml, release: bool) -> Result<()> {
+    let a = &cfg.aegis;
+    if !a.enabled {
+        return Ok(());
+    }
+    let build_id = match a.build_id.as_deref().filter(|s| !s.is_empty()) {
+        Some(explicit) => explicit.to_string(),
+        None => derive_git_build_id(root, &a.build_id_prefix)?,
+    };
+    let profile = if release { "release" } else { "debug" };
+    for var in &a.build_id_env {
+        // SAFETY: set before any threads are spawned; single-threaded here.
+        unsafe { std::env::set_var(var, &build_id) };
+    }
+    // Lets the post-build seal/upload hook decide whether to push to the live
+    // R2 store (release) or just bundle locally (debug iterations).
+    unsafe { std::env::set_var("AEGIS_BUILD_PROFILE", profile) };
+    eprintln!(
+        "{} aegis build id {} [{profile}] (exported to {})",
+        style("aegis:").cyan().bold(),
+        style(&build_id).bold(),
+        a.build_id_env.join(", ")
+    );
+    Ok(())
+}
+
+/// `<prefix>-<git short sha>` with a `-dirty` suffix when the tree has
+/// uncommitted changes.
+fn derive_git_build_id(root: &Path, prefix: &str) -> Result<String> {
+    use std::process::Command;
+    let sha_out = Command::new("git")
+        .current_dir(root)
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+        .context("running `git rev-parse` to derive aegis.build_id")?;
+    if !sha_out.status.success() {
+        bail!(
+            "aegis.build_id not set and `git rev-parse --short HEAD` failed; \
+             set `aegis.build_id` explicitly in the config"
+        );
+    }
+    let sha = String::from_utf8_lossy(&sha_out.stdout).trim().to_string();
+    let dirty = Command::new("git")
+        .current_dir(root)
+        .args(["status", "--porcelain"])
+        .output()
+        .ok()
+        .map(|o| !o.stdout.is_empty())
+        .unwrap_or(false);
+    Ok(format!(
+        "{prefix}-{sha}{}",
+        if dirty { "-dirty" } else { "" }
+    ))
 }
 
 fn load_cfg(root: &Path) -> Result<InfinityMsfsToml> {

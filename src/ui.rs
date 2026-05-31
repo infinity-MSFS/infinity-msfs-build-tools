@@ -293,6 +293,24 @@ pub fn announce_post_hook(count: usize) {
     );
 }
 
+/// Note that a build phase's hooks were skipped (debug build). `phase` is
+/// "pre" or "post".
+pub fn announce_hooks_skipped(phase: &str, count: usize) {
+    if count == 0 {
+        return;
+    }
+    println!(
+        "{} {} {}",
+        style("→").dim().bold(),
+        style(format!("Skipping {phase}-build hooks")).dim(),
+        style(format!(
+            "({count} {}; debug build)",
+            pluralize(count, "hook")
+        ))
+        .dim(),
+    );
+}
+
 pub fn print_error(err: &Error) {
     eprintln!("{} {err:#}", style("error:").red().bold());
 }

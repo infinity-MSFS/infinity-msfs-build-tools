@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.3.6"
+version = "0.3.7"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -24,6 +24,10 @@ rolldown = "=0.1.0"
 rolldown_plugin = "=0.1.0"
 rolldown_common = "=0.1.0"
 rolldown_utils = "=0.1.0"
+# Transitive via rolldown; 0.1.1 changed
+# representative_file_name_for_preserve_modules to a 3-tuple, which
+# rolldown 0.1.0's call site can't destructure. Pin to the 2-tuple release.
+rolldown_std_utils = "=0.1.0"
 arcstr = "1"
 
 # rolldown_error 0.1.0 / rolldown_resolver 0.1.0 pattern-match
@@ -60,13 +64,13 @@ name = "infinity-msfs"
 path = "src/main.rs"
 
 [dependencies]
-infinity-build-core = { path = "crates/infinity-build-core", version = "0.3.6" }
-infinity-build-js = { path = "crates/infinity-build-js", version = "0.3.6" }
-infinity-build-rust = { path = "crates/infinity-build-rust", version = "0.3.6" }
-infinity-build-package = { path = "crates/infinity-build-package", version = "0.3.6" }
-infinity-build-sdk = { path = "crates/infinity-build-sdk", version = "0.3.6" }
-infinity-build-watch = { path = "crates/infinity-build-watch", version = "0.3.6" }
-infinity-build-create = { path = "crates/infinity-build-create", version = "0.3.6" }
+infinity-build-core = { path = "crates/infinity-build-core", version = "0.3.7" }
+infinity-build-js = { path = "crates/infinity-build-js", version = "0.3.7" }
+infinity-build-rust = { path = "crates/infinity-build-rust", version = "0.3.7" }
+infinity-build-package = { path = "crates/infinity-build-package", version = "0.3.7" }
+infinity-build-sdk = { path = "crates/infinity-build-sdk", version = "0.3.7" }
+infinity-build-watch = { path = "crates/infinity-build-watch", version = "0.3.7" }
+infinity-build-create = { path = "crates/infinity-build-create", version = "0.3.7" }
 
 clap = { version = "4.5", features = ["derive", "env"] }
 serde = { workspace = true }
