@@ -19,8 +19,9 @@ pub fn built_artifact_path(root: &Path, plan: &BuildPlan, release: bool) -> Path
     path.push(profile);
 
     let file = match plan.kind {
-        // Cargo normalizes wasm bin stems to underscores; native exes keep hyphens.
+        // Cargo normalizes wasm/cdylib stems to underscores; native exes keep hyphens.
         ArtifactKind::Wasm => format!("{}.wasm", plan.bin.replace('-', "_")),
+        ArtifactKind::NativeDynamic => format!("{}.dll", plan.bin.replace('-', "_")),
         ArtifactKind::Native => {
             if cfg!(target_os = "windows") {
                 format!("{}.exe", plan.bin)
@@ -39,6 +40,16 @@ pub fn run_cargo_build(
     plan: &BuildPlan,
     release: bool,
 ) -> BuildResult<()> {
+    // A native-dynamic gauge takes a different cargo invocation: build the lib
+    // as a `cdylib` (overriding its `rlib` crate-type) and link the emulator
+    // shim import library — so its `nvg*`/`fs*` imports resolve at load. Using
+    // `cargo rustc` (not `cargo build`) means the trailing `-L`/`-l` flags apply
+    // only to the final crate, never to dependencies, build scripts, or
+    // proc-macros.
+    if plan.kind == ArtifactKind::NativeDynamic {
+        return run_cargo_rustc_cdylib(runner, root, plan, release);
+    }
+
     let mut cmd = Command::new("cargo");
     cmd.current_dir(root)
         .arg("build")
@@ -70,6 +81,49 @@ pub fn run_cargo_build(
     }
 
     runner.run(&mut cmd, "cargo build")
+}
+
+/// Build a gauge as a native `cdylib` linked against the emulator shim.
+///
+/// `host-abi` is already enabled on infinity-rs through the gauge's default
+/// (`wasm`) feature, and infinity-rs's `build.rs` skips the NanoVG compile +
+/// `WasmVersions` link off the wasm target — so no feature juggling is needed;
+/// only the crate-type override and the shim link.
+fn run_cargo_rustc_cdylib(
+    runner: &dyn Runner,
+    root: &Path,
+    plan: &BuildPlan,
+    release: bool,
+) -> BuildResult<()> {
+    let shim_dir = plan
+        .shim_lib_dir
+        .as_ref()
+        .expect("native-dynamic plan always carries a shim_lib_dir");
+
+    let mut cmd = Command::new("cargo");
+    cmd.current_dir(root)
+        .arg("rustc")
+        .arg("-p")
+        .arg(&plan.package)
+        .arg("--lib")
+        .arg("--crate-type")
+        .arg("cdylib");
+
+    if !plan.features.is_empty() {
+        cmd.arg("--features").arg(plan.features.join(","));
+    }
+    if release {
+        cmd.arg("--release");
+    }
+
+    // Everything past `--` is handed only to the final crate's rustc.
+    cmd.arg("--")
+        .arg("-L")
+        .arg(format!("native={}", shim_dir.display()))
+        .arg("-l")
+        .arg("dylib=msfs_host_shim.dll");
+
+    runner.run(&mut cmd, "cargo rustc (native-dynamic)")
 }
 
 pub fn run_wasm_opt(

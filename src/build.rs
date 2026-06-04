@@ -27,7 +27,8 @@ pub fn run_build(args: BuildArgs) -> Result<()> {
     apply_aegis_build_id(&root, &cfg, args.release)?;
 
     let do_rust = !args.js_only;
-    let do_js = !args.rust_only && cfg.js.is_some();
+    // `--native` targets the off-sim emulator, which has no JS bridge — skip it.
+    let do_js = !args.rust_only && !args.native && cfg.js.is_some();
 
     let any_rust = do_rust && !cfg.rust.packages.is_empty();
     let any_js = do_js;
@@ -87,11 +88,11 @@ fn run_rust_pipeline(
     sdk::ensure_sdk()?;
 
     let metadata = cargo_meta::load_metadata(root)?;
-    let mut plans = resolve_plans(root, &cfg.rust, &metadata, &args.only)?;
+    let mut plans = resolve_plans(root, &cfg.rust, &metadata, &args.only, args.native)?;
 
     if !cfg!(target_os = "windows") {
         plans.retain(|plan| {
-            if plan.kind == ArtifactKind::Native {
+            if matches!(plan.kind, ArtifactKind::Native | ArtifactKind::NativeDynamic) {
                 eprintln!(
                     "{} skipping native package {} (only built on Windows)",
                     style("!").yellow().bold(),
@@ -150,7 +151,7 @@ pub fn run_projects(args: ProjectsArgs) -> Result<()> {
     let cfg = load_cfg(&root)?;
     let metadata = cargo_meta::load_metadata(&root)?;
 
-    let plans = resolve_plans(&root, &cfg.rust, &metadata, &args.only).unwrap_or_default();
+    let plans = resolve_plans(&root, &cfg.rust, &metadata, &args.only, false).unwrap_or_default();
 
     let js_instruments: Vec<(String, String)> = match &cfg.js {
         Some(js) => js

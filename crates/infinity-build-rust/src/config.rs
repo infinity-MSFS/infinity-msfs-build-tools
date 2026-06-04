@@ -14,6 +14,13 @@ pub struct RustConfig {
     #[serde(default)]
     pub wasm_opt: WasmOptConfig,
 
+    /// Directory holding the emulator shim's import library
+    /// (`msfs_host_shim.dll.lib`), linked by `native-dynamic` gauge builds.
+    /// Falls back to the `INFINITY_EMU_SHIM_DIR` env var. Relative paths are
+    /// resolved against the project root.
+    #[serde(default)]
+    pub shim_lib_dir: Option<String>,
+
     #[serde(default)]
     pub packages: Vec<RustPackage>,
 }
@@ -25,6 +32,7 @@ impl Default for RustConfig {
             output_dir: default_output_dir(),
             copy_files: Vec::new(),
             wasm_opt: WasmOptConfig::default(),
+            shim_lib_dir: None,
             packages: Vec::new(),
         }
     }
@@ -52,16 +60,22 @@ pub struct RustPackage {
     pub copy_files: Vec<CopyRule>,
 }
 
-/// `wasm` artifacts target `wasm32-wasip1` (or whatever `target` is set to)
-/// and run through wasm-opt. `native` artifacts target the host triple,
-/// only build on Windows (SimConnect's import lib is Windows-only), and
-/// skip wasm-opt.
+/// How an artifact is built and packaged.
+///
+/// - `wasm` — target `wasm32-wasip1` (or `target`), run through wasm-opt. The
+///   MSFS gauge/system module.
+/// - `native` — a standalone SimConnect client exe on the host triple
+///   (Windows-only, SimConnect's import lib is Windows-only); skips wasm-opt.
+/// - `native-dynamic` — the *same gauge* built as a host `.dll` for the
+///   off-sim emulator (infinity-emu): a `cdylib` whose `nvg*`/`fs*` imports are
+///   linked against `msfs_host_shim.dll.lib`. Windows-only, skips wasm-opt.
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Default)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum ArtifactKind {
     #[default]
     Wasm,
     Native,
+    NativeDynamic,
 }
 
 #[derive(Debug, Deserialize, Clone)]

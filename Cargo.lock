@@ -1092,7 +1092,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-core"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "serde",
@@ -1101,7 +1101,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-create"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "console",
@@ -1114,7 +1114,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-js"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "arcstr",
@@ -1138,7 +1138,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-package"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "infinity-build-core",
@@ -1148,7 +1148,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-rust"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -1160,7 +1160,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-sdk"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "cab",
@@ -1175,7 +1175,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-build-watch"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "console",
@@ -1185,7 +1185,7 @@ dependencies = [
 
 [[package]]
 name = "infinity-msfs"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anyhow",
  "cargo_metadata",

@@ -80,6 +80,13 @@ pub struct BuildArgs {
     #[arg(long = "no-wasm-opt")]
     pub no_wasm_opt: bool,
 
+    /// Rebuild every wasm gauge as a native `.dll` for the off-sim emulator
+    /// (infinity-emu) instead of a `.wasm` module. Links the shim import
+    /// library (see `[rust].shim_lib_dir` / `INFINITY_EMU_SHIM_DIR`) and skips
+    /// the JS pipeline. SimConnect-only `native` entries are unaffected.
+    #[arg(long)]
+    pub native: bool,
+
     /// Minify bundled JS.
     #[arg(long)]
     pub minify: bool,
