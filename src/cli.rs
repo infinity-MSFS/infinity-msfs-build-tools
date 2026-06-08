@@ -194,4 +194,10 @@ pub struct WatchArgs {
     /// this window after the last event collapse into one rebuild.
     #[arg(long, default_value_t = 300)]
     pub debounce: u64,
+
+    /// Rebuild as native `.dll`s for the off-sim emulator (infinity-emu) on each
+    /// change, instead of `.wasm` modules. Same effect as `build --native`; pair
+    /// with `--rust-only` for the tightest gauge-iteration loop.
+    #[arg(long)]
+    pub native: bool,
 }

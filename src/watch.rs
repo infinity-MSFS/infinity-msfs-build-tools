@@ -44,7 +44,7 @@ fn run_once(args: &WatchArgs) {
         rust_only: args.rust_only,
         js_only: args.js_only,
         no_wasm_opt: args.no_wasm_opt,
-        native: false,
+        native: args.native,
         minify: false,
         sourcemap: None,
         skip_simulator_package: false,
