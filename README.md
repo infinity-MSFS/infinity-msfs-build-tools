@@ -43,6 +43,8 @@ infinity-msfs build --release        # cargo build → wasm-opt → copy
 infinity-msfs build --js-only        # only the JS half of the pipeline
 infinity-msfs package                # fspackagetool (Windows + sim required)
 infinity-msfs watch --js             # rebuild on file change
+infinity-msfs test                   # cargo test (host) for [[rust.packages]]
+infinity-msfs test --only foo -- --nocapture   # filter + forwarded cargo args
 ```
 
 See the docs site for the full configuration schema and per-command flags.

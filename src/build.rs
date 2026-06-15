@@ -85,16 +85,18 @@ fn run_rust_pipeline(
     args: &BuildArgs,
     runner: &CliRunner,
 ) -> Result<()> {
-    sdk::ensure_sdk()?;
-
     let metadata = cargo_meta::load_metadata(root)?;
     let mut plans = resolve_plans(root, &cfg.rust, &metadata, &args.only, args.native)?;
 
+    // A standalone SimConnect client (`native`) links SimConnect's Windows-only
+    // import library, so it's Windows-only. A `native-dynamic` emulator gauge
+    // links nothing platform-specific (it binds to the shim at load), so it
+    // builds on every OS — `.dll` on Windows, `.so` on Linux, `.dylib` on macOS.
     if !cfg!(target_os = "windows") {
         plans.retain(|plan| {
-            if matches!(plan.kind, ArtifactKind::Native | ArtifactKind::NativeDynamic) {
+            if matches!(plan.kind, ArtifactKind::Native) {
                 eprintln!(
-                    "{} skipping native package {} (only built on Windows)",
+                    "{} skipping native package {} (SimConnect exe is Windows-only)",
                     style("!").yellow().bold(),
                     style(&plan.package).bold(),
                 );
@@ -109,6 +111,16 @@ fn run_rust_pipeline(
         // Filter eliminated everything (only matched JS instruments).
         // Not an error — JS step still runs.
         return Ok(());
+    }
+
+    // The MSFS SDK is only needed for wasm builds (its wasi-sysroot supplies C
+    // headers) and native SimConnect exes (its import library). A native-dynamic
+    // emulator build links only the shim, so don't force an SDK download for it.
+    if plans
+        .iter()
+        .any(|p| matches!(p.kind, ArtifactKind::Wasm | ArtifactKind::Native))
+    {
+        sdk::ensure_sdk()?;
     }
 
     let use_wasm_opt = cfg.rust.wasm_opt.enabled && !args.no_wasm_opt;
@@ -242,7 +254,7 @@ fn derive_git_build_id(root: &Path, prefix: &str) -> Result<String> {
     ))
 }
 
-fn load_cfg(root: &Path) -> Result<InfinityMsfsToml> {
+pub(crate) fn load_cfg(root: &Path) -> Result<InfinityMsfsToml> {
     let cfg_path = util::config_path(root);
     if cfg_path.exists() {
         InfinityMsfsToml::load(&cfg_path)

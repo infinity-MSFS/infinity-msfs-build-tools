@@ -29,6 +29,29 @@ pub enum Commands {
     Watch(WatchArgs),
     /// Scaffold a new MSFS project from a built-in template.
     Create(CreateArgs),
+    /// Run `cargo test` for the configured `[[rust.packages]]` on the host.
+    /// A thin passthrough: extra arguments are forwarded verbatim to cargo
+    /// (test-name filters, `--features`, `-- --nocapture`, …).
+    Test(TestArgs),
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct TestArgs {
+    /// Restrict to the named entries. Matched against
+    /// `[[rust.packages]].cargo_package`. May be passed multiple times.
+    /// With none configured, tests the whole workspace.
+    #[arg(long = "only")]
+    pub only: Vec<String>,
+
+    /// Test in release mode.
+    #[arg(long)]
+    pub release: bool,
+
+    /// Arguments forwarded verbatim to `cargo test` — a test-name filter,
+    /// `--features foo`, `--no-default-features`, `-- --nocapture`, etc.
+    /// Everything after the subcommand (and its flags above) is passed through.
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub cargo_args: Vec<String>,
 }
 
 #[derive(Debug, Args, Clone)]

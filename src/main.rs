@@ -8,6 +8,7 @@ mod package;
 mod process;
 mod runner;
 mod sdk_install;
+mod test;
 mod ui;
 mod util;
 mod watch;
@@ -39,6 +40,7 @@ fn real_main() -> Result<()> {
         Commands::Package(args) => package::run_package(args)?,
         Commands::Watch(args) => watch::run_watch(args)?,
         Commands::Create(args) => create::run_create(args)?,
+        Commands::Test(args) => test::run_test(args)?,
     }
 
     Ok(())

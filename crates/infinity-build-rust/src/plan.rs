@@ -99,7 +99,9 @@ fn plan_from_entry(
         .filter(|_| !(force_native_dynamic && kind == ArtifactKind::NativeDynamic))
         .unwrap_or_else(|| default_artifact_name(&bin, kind));
 
-    let shim_lib_dir = if kind == ArtifactKind::NativeDynamic {
+    // The import library is only linked on Windows; Linux/macOS bind the
+    // gauge's host imports to the shim at load time, so no shim dir is needed.
+    let shim_lib_dir = if kind == ArtifactKind::NativeDynamic && cfg!(target_os = "windows") {
         Some(resolve_shim_lib_dir(root, rust)?)
     } else {
         None
@@ -150,7 +152,9 @@ fn resolve_shim_lib_dir(root: &Path, rust: &RustConfig) -> Result<PathBuf> {
 pub fn default_artifact_name(bin: &str, kind: ArtifactKind) -> String {
     match kind {
         ArtifactKind::Wasm => format!("{bin}.wasm"),
-        ArtifactKind::NativeDynamic => format!("{bin}.dll"),
+        // Platform cdylib name (`foo.dll` / `libfoo.so` / `libfoo.dylib`). `bin`
+        // is already underscored, so this is `{bin}.dll` on Windows as before.
+        ArtifactKind::NativeDynamic => crate::steps::cdylib_filename(&bin.replace('-', "_")),
         ArtifactKind::Native => {
             if cfg!(target_os = "windows") {
                 format!("{bin}.exe")

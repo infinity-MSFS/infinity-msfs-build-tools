@@ -10,6 +10,19 @@ use std::{
     process::Command,
 };
 
+/// Filename cargo emits for a `cdylib` with stem `stem` on the host platform:
+/// `foo.dll` (Windows), `libfoo.so` (Linux), `libfoo.dylib` (macOS). The
+/// emulator derives the same name when it goes to load the artifact.
+pub fn cdylib_filename(stem: &str) -> String {
+    if cfg!(target_os = "windows") {
+        format!("{stem}.dll")
+    } else if cfg!(target_os = "macos") {
+        format!("lib{stem}.dylib")
+    } else {
+        format!("lib{stem}.so")
+    }
+}
+
 pub fn built_artifact_path(root: &Path, plan: &BuildPlan, release: bool) -> PathBuf {
     let profile = if release { "release" } else { "debug" };
     let mut path = root.join("target");
@@ -21,7 +34,9 @@ pub fn built_artifact_path(root: &Path, plan: &BuildPlan, release: bool) -> Path
     let file = match plan.kind {
         // Cargo normalizes wasm/cdylib stems to underscores; native exes keep hyphens.
         ArtifactKind::Wasm => format!("{}.wasm", plan.bin.replace('-', "_")),
-        ArtifactKind::NativeDynamic => format!("{}.dll", plan.bin.replace('-', "_")),
+        // A cdylib's filename is platform-specific: `foo.dll` (Windows),
+        // `libfoo.so` (Linux), `libfoo.dylib` (macOS).
+        ArtifactKind::NativeDynamic => cdylib_filename(&plan.bin.replace('-', "_")),
         ArtifactKind::Native => {
             if cfg!(target_os = "windows") {
                 format!("{}.exe", plan.bin)
@@ -83,23 +98,26 @@ pub fn run_cargo_build(
     runner.run(&mut cmd, "cargo build")
 }
 
-/// Build a gauge as a native `cdylib` linked against the emulator shim.
+/// Build a gauge as a native `cdylib` whose `nvg*`/`fs*` host imports resolve
+/// against the emulator shim.
 ///
 /// `host-abi` is already enabled on infinity-rs through the gauge's default
 /// (`wasm`) feature, and infinity-rs's `build.rs` skips the NanoVG compile +
 /// `WasmVersions` link off the wasm target — so no feature juggling is needed;
-/// only the crate-type override and the shim link.
+/// only the crate-type override and the platform-specific shim binding:
+///
+/// - **Windows.** Link the shim's import library (`msfs_host_shim.dll.lib`) so
+///   the externals bind to the loaded `msfs_host_shim.dll` by name.
+/// - **macOS.** Leave them undefined (`-undefined dynamic_lookup`); they bind
+///   to the `RTLD_GLOBAL` shim at load.
+/// - **Linux.** Undefined symbols in a `cdylib` are allowed by default —
+///   nothing extra; they bind to the global shim at load.
 fn run_cargo_rustc_cdylib(
     runner: &dyn Runner,
     root: &Path,
     plan: &BuildPlan,
     release: bool,
 ) -> BuildResult<()> {
-    let shim_dir = plan
-        .shim_lib_dir
-        .as_ref()
-        .expect("native-dynamic plan always carries a shim_lib_dir");
-
     let mut cmd = Command::new("cargo");
     cmd.current_dir(root)
         .arg("rustc")
@@ -117,11 +135,24 @@ fn run_cargo_rustc_cdylib(
     }
 
     // Everything past `--` is handed only to the final crate's rustc.
-    cmd.arg("--")
-        .arg("-L")
-        .arg(format!("native={}", shim_dir.display()))
-        .arg("-l")
-        .arg("dylib=msfs_host_shim.dll");
+    cmd.arg("--");
+
+    if cfg!(target_os = "windows") {
+        let shim_dir = plan
+            .shim_lib_dir
+            .as_ref()
+            .expect("native-dynamic plan on Windows always carries a shim_lib_dir");
+        cmd.arg("-L")
+            .arg(format!("native={}", shim_dir.display()))
+            .arg("-l")
+            .arg("dylib=msfs_host_shim.dll");
+    } else if cfg!(target_os = "macos") {
+        cmd.arg("-C")
+            .arg("link-arg=-undefined")
+            .arg("-C")
+            .arg("link-arg=dynamic_lookup");
+    }
+    // Linux: nothing — the cdylib keeps its undefined nvg*/fs* externs.
 
     runner.run(&mut cmd, "cargo rustc (native-dynamic)")
 }
